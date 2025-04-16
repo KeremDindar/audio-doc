@@ -9,7 +9,6 @@ protocol TranscriptionManagerDelegate: AnyObject {
 }
 
 class TranscriptionManager: NSObject {
-    // MARK: - Properties
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioEngine: AVAudioEngine?
@@ -17,6 +16,7 @@ class TranscriptionManager: NSObject {
     private var audioURL: URL
     private var transcription: String = ""
     private var summaryKeywords: [String] = []
+    private var summary: String = ""
     private lazy var openAIService = OpenAIManager(apiKey: "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")
     private var transcriptionCallback: ((String?, Error?) -> Void)?
     private var keywordsCallback: (([String]) -> Void)?
@@ -32,7 +32,7 @@ class TranscriptionManager: NSObject {
     
     // MARK: - Setup
     private func setupSpeechRecognizer() {
-        speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+        speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "tr-TR"))
     }
     
     // MARK: - Speech Recognition Methods
@@ -61,19 +61,19 @@ class TranscriptionManager: NSObject {
             DispatchQueue.main.async {
                 switch authStatus {
                 case .authorized:
-                    print("✅ Speech recognition authorized")
+                    print("Speech recognition authorized")
                     self.performTranscription()
                 case .denied:
-                    print("❌ Speech recognition denied")
+                    print("Speech recognition denied")
                     completion(nil, NSError(domain: "TranscriptionError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Speech Recognition Denied"]))
                 case .restricted:
-                    print("⚠️ Speech recognition restricted")
+                    print(" Speech recognition restricted")
                     completion(nil, NSError(domain: "TranscriptionError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Speech Recognition Restricted"]))
                 case .notDetermined:
-                    print("❓ Speech recognition not determined")
+                    print(" Speech recognition not determined")
                     completion(nil, NSError(domain: "TranscriptionError", code: 3, userInfo: [NSLocalizedDescriptionKey: "Speech Recognition Not Determined"]))
                 @unknown default:
-                    print("⚠️ Unknown speech recognition status")
+                    print("Unknown speech recognition status")
                     completion(nil, NSError(domain: "TranscriptionError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Unknown Authorization Status"]))
                 }
             }
@@ -81,27 +81,42 @@ class TranscriptionManager: NSObject {
     }
     
     func generateKeywords(from text: String, completion: @escaping ([String]) -> Void) {
+        // Kelime sayısını kontrol et
+        let wordCount = text.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .count
+        
+        if wordCount < 5 {
+            // Çok az kelime varsa, direkt olarak kelimeleri keyword olarak kullan
+            let keywords = text.components(separatedBy: .whitespacesAndNewlines)
+                .filter { !$0.isEmpty }
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            
+            print("📝 Very short text detected, using words directly as keywords: \(keywords)")
+            DispatchQueue.main.async {
+                completion(keywords)
+            }
+            return
+        }
+        
+        // Normal akışa devam et
         self.keywordsCallback = completion
-        generateSimpleKeywords(from: text)
+        openAIService.delegate = self
+        openAIService.generateSummaryKeywords(from: text)
     }
+    
+
     
     // MARK: - Private Methods
     private func performTranscription() {
-        print("🎤 Starting transcription process...")
-        print("📂 Audio URL: \(audioURL.path)")
         
-        // Dil olarak Türkçe'yi seçiyoruz
         let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "tr-TR"))
-        print("🌍 Turkish recognizer available: \(recognizer?.isAvailable ?? false)")
         
         if recognizer == nil || !recognizer!.isAvailable {
-            print("⚠️ Turkish recognizer not available, falling back to English")
             // Türkçe kullanılamıyorsa İngilizce'yi deneyelim
             let fallbackRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-            print("🌍 English recognizer available: \(fallbackRecognizer?.isAvailable ?? false)")
             
             if fallbackRecognizer == nil || !fallbackRecognizer!.isAvailable {
-                print("❌ No speech recognizer available")
                 DispatchQueue.main.async {
                     self.transcriptionCallback?(nil, NSError(domain: "TranscriptionError", code: 5, userInfo: [NSLocalizedDescriptionKey: "No Speech Recognizer Available"]))
                 }
@@ -112,14 +127,10 @@ class TranscriptionManager: NSObject {
         let request = SFSpeechURLRecognitionRequest(url: audioURL)
         request.shouldReportPartialResults = true
         
-        print("🎯 Starting recognition task...")
-        
-        // Tanıma işlemini başlat
         recognizer?.recognitionTask(with: request) { [weak self] (result, error) in
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Transcription error: \(error.localizedDescription)")
                 print("Error details: \(error)")
                 DispatchQueue.main.async {
                     self.transcriptionCallback?(nil, error)
@@ -128,68 +139,41 @@ class TranscriptionManager: NSObject {
             }
             
             if let result = result {
-                // Tanınan metni al
                 let transcription = result.bestTranscription.formattedString
-                print("📝 Received transcription: \(transcription)")
-                
+
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     
-                    // Update the transcription text
                     self.transcription = transcription
-                    
-                    // Callback ile sonucu dön
                     self.transcriptionCallback?(transcription, nil)
                     
-                    // İşlem tamamlandıysa anahtar kelimeleri oluştur
+                    // Sadece final sonuç geldiğinde keyword üret
                     if result.isFinal {
-                        print("✅ Transcription completed")
-                        self.generateSimpleKeywords(from: transcription)
+                        self.generateKeywords(from: transcription) { keywords in
+                            DispatchQueue.main.async {
+                                self.summaryKeywords = keywords
+                                self.keywordsCallback?(keywords)
+                            }
+                        }
                     }
                 }
             } else {
-                print("⚠️ No result received from recognition task")
+                print(" No result received from recognition task")
             }
         }
     }
     
-    private func generateSimpleKeywords(from text: String) {
-        // Basit bir anahtar kelime oluşturma işlemi
-        // Gerçek yaşamda daha karmaşık NLP kullanılmalı
-        
-        var words = text.components(separatedBy: " ")
-        
-        // Stop words'leri kaldır (basit Türkçe örneği)
-        let stopWords = ["ve", "veya", "ile", "bu", "şu", "o", "bir", "için", "gibi", "de", "da"]
-        words = words.filter { !stopWords.contains($0.lowercased()) }
-        
-        // Kısa kelimeleri kaldır
-        words = words.filter { $0.count > 3 }
-        
-        // Tekrarları kaldır
-        words = Array(Set(words))
-        
-        // En fazla 5 anahtar kelime seç
-        let keywords = Array(words.prefix(5))
-        
-        self.summaryKeywords = keywords
-        self.keywordsCallback?(keywords)
-    }
-    
     // MARK: - Live Audio Transcription
     func startLiveTranscription() {
-        // Check if there's an existing recognition task
         if let recognitionTask = recognitionTask {
             recognitionTask.cancel()
             self.recognitionTask = nil
         }
         
-        // Initialize audio engine if needed
         if audioEngine == nil {
             audioEngine = AVAudioEngine()
         }
         
-        // Create a new recognition request
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         
         guard let recognitionRequest = recognitionRequest else {
@@ -201,25 +185,20 @@ class TranscriptionManager: NSObject {
         recognitionRequest.shouldReportPartialResults = true
         
         do {
-            // Configure audio session
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.record, mode: .default)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
             
-            // Configure audio engine
             let inputNode = audioEngine!.inputNode
             let recordingFormat = inputNode.outputFormat(forBus: 0)
             
-            // Install tap on input node
             inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
                 self.recognitionRequest?.append(buffer)
             }
             
-            // Start audio engine
             audioEngine!.prepare()
             try audioEngine!.start()
             
-            // Start recognition task
             recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
                 guard let self = self else { return }
                 
@@ -231,13 +210,11 @@ class TranscriptionManager: NSObject {
                 
                 guard let result = result else { return }
                 
-                // Get transcription text
                 let transcriptionText = result.bestTranscription.formattedString
                 
-                // Notify delegate about update
+
                 self.delegate?.transcriptionManager(self, didUpdateTranscription: transcriptionText, isFinal: result.isFinal)
                 
-                // If final result, notify completion
                 if result.isFinal {
                     self.delegate?.transcriptionManager(self, didFinishWithTranscription: transcriptionText)
                     self.stopLiveTranscription()
@@ -257,5 +234,26 @@ class TranscriptionManager: NSObject {
         
         recognitionTask?.cancel()
         recognitionTask = nil
+    }
+}
+
+extension TranscriptionManager: OpenAIManagerDelegate {
+    func openAIManager(_ manager: OpenAIManager, didGenerateSummaryKeywords keywords: [String]) {
+        let limitedKeywords = Array(keywords.prefix(6))
+        DispatchQueue.main.async { [weak self] in
+            self?.keywordsCallback?(limitedKeywords)
+        }
+    }
+    
+//    func openAIManager(_ manager: OpenAIManager, didGenerateSummary summary: String) {
+//        self.summary = summary
+//        self.summaryCallback?(summary)
+//    }
+    
+    func openAIManager(_ manager: OpenAIManager, didFailWithError error: Error) {
+        print("❌ OpenAI error: \(error.localizedDescription)")
+        DispatchQueue.main.async { [weak self] in
+            self?.keywordsCallback?([])
+        }
     }
 } 

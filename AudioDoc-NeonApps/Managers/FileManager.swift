@@ -42,33 +42,18 @@ class AudioFileManager {
     }
     
     // MARK: - Audio File Download
-    
-    /*  localURL: İndirilen dosyayı nereye kaydedeceğiz (aynı isimle).
-     
-     Eğer dosya daha önce indirilmişse, tekrar indirmez.
 
-     Yoksa:
-
-     URLSession.shared.downloadTask: Dosyayı arka planda indirir.
-
-     tempURL: Dosya önce geçici klasöre indirilir.
-
-     Daha sonra moveItem(at:to:) ile bu dosyayı kalıcı klasöre taşır.
-     */
     
     func downloadAudioFile(from remoteURL: URL, completion: @escaping (Result<URL, Error>) -> Void) {
-        // Create URL for local file
         let documentsDirectory = getDocumentsDirectory()
         let fileName = remoteURL.lastPathComponent
         let localURL = documentsDirectory.appendingPathComponent(fileName)
         
-        // If file already exists, return it immediately
         if FileManager.default.fileExists(atPath: localURL.path) {
             completion(.success(localURL))
             return
         }
         
-        // Download file
         let task = URLSession.shared.downloadTask(with: remoteURL) { tempURL, response, error in
             if let error = error {
                 completion(.failure(error))
@@ -82,12 +67,10 @@ class AudioFileManager {
             }
             
             do {
-                // Remove existing file if necessary
                 if FileManager.default.fileExists(atPath: localURL.path) {
                     try FileManager.default.removeItem(at: localURL)
                 }
                 
-                // Move downloaded file to permanent location
                 try FileManager.default.moveItem(at: tempURL, to: localURL)
                 completion(.success(localURL))
             } catch {
@@ -98,32 +81,6 @@ class AudioFileManager {
         task.resume()
     }
     
-    // MARK: - File Metadata
-    
-   /*  attributesOfItem: Belirli bir dosyanın meta verilerini döner.
-    
-    .size: Dosya boyutunu byte cinsinden verir.
+   
 
-    UInt64: Çok büyük dosyaları bile destekleyebilecek tamsayı türü.
-
-*/
-//    func getFileSize(at url: URL) -> UInt64? {
-//        do {
-//            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-//            return attributes[.size] as? UInt64
-//        } catch {
-//            print("Error getting file size: \(error.localizedDescription)")
-//            return nil
-//        }
-//    }
-//    
-//    func getFileCreationDate(at url: URL) -> Date? {
-//        do {
-//            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-//            return attributes[.creationDate] as? Date
-//        } catch {
-//            print("Error getting file creation date: \(error.localizedDescription)")
-//            return nil
-//        }
-//    }
-} 
+}

@@ -401,7 +401,7 @@ extension TranscriptionViewController {
         toastLabel.layer.cornerRadius = 8
         toastLabel.clipsToBounds = true
         toastLabel.numberOfLines = 0
-        let padding: CGFloat = 16
+//        let padding: CGFloat = 16
         view.addSubview(toastLabel)
         toastLabel.translatesAutoresizingMaskIntoConstraints = false
         

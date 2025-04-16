@@ -120,7 +120,6 @@ class FirebaseService {
     }
     
     // MARK: - Save Recording
-    /// Firestore'a kayıt
     func saveRecording(_ recording: Recording, completion: @escaping (Result<String, Error>) -> Void) {
         let recordingDict = recording.toDictionary()
         
@@ -136,7 +135,6 @@ class FirebaseService {
     }
     
     // MARK: - Fetch Recordings
-    /// Tüm kayıtları getir
     func fetchAllRecordings(completion: @escaping (Result<[Recording], Error>) -> Void) {
         db.collection(recordingsCollection)
             .order(by: "createdAt", descending: true)
@@ -157,7 +155,6 @@ class FirebaseService {
     }
     
     // MARK: - Delete Recording
-    /// Kayıt silme
     func deleteRecording(_ recording: Recording, completion: @escaping (Result<Void, Error>) -> Void) {
         // Önce kayıt bilgilerini al
         db.collection(recordingsCollection).document(recording.id).getDocument { snapshot, error in
@@ -171,14 +168,12 @@ class FirebaseService {
                 return
             }
             
-            // Kayıt silme işlemi
             self.db.collection(self.recordingsCollection).document(recording.id).delete { error in
                 if let error = error {
                     completion(.failure(error))
                     return
                 }
                 
-                // İlişkili dosyaları silme işlemi
                 if let audioURL = data["audioURL"] as? String {
                     let audioRef = Storage.storage().reference(forURL: audioURL)
                     audioRef.delete { error in
@@ -203,7 +198,6 @@ class FirebaseService {
     }
     
     // MARK: - Real-time Updates
-    /// Kayıtları gerçek zamanlı dinle
     func listenForRecordings(completion: @escaping (Result<[Recording], Error>) -> Void) -> ListenerRegistration {
         return db.collection(recordingsCollection)
             .order(by: "createdAt", descending: true)

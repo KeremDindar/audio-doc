@@ -9,12 +9,11 @@ import UIKit
 import SnapKit
 
 // MARK: - PaywallVC
-/// View controller that handles the premium features paywall screen
 class PaywallVC: UIViewController {
     
     // MARK: - UI Components
     
-    /// Title label with gradient text effect
+    
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "What are your\nPremium Features?"
@@ -25,7 +24,6 @@ class PaywallVC: UIViewController {
         return label
     }()
     
-    /// Gradient layer used for the title text effect
     private let gradientLayer: CAGradientLayer = {
         let gradient = CAGradientLayer()
         gradient.colors = [
@@ -38,7 +36,6 @@ class PaywallVC: UIViewController {
         return gradient
     }()
     
-    /// Stack view containing premium features
     private let featuresStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
@@ -46,7 +43,6 @@ class PaywallVC: UIViewController {
         return stack
     }()
     
-    /// Close button to dismiss the paywall
     private let closeButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "xmark"), for: .normal)
@@ -54,7 +50,6 @@ class PaywallVC: UIViewController {
         return button
     }()
     
-    /// Continue button to proceed with purchase
     private let continueButton: UIButton = {
         let button = UIButton()
         button.setTitle("Continue", for: .normal)
@@ -63,7 +58,6 @@ class PaywallVC: UIViewController {
         return button
     }()
     
-    /// Stack view containing pricing options
     private let pricingStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
@@ -71,7 +65,6 @@ class PaywallVC: UIViewController {
         return stack
     }()
     
-    /// Stack view for footer items (Terms, Restore, Privacy)
     private let footerStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
@@ -95,7 +88,6 @@ class PaywallVC: UIViewController {
     
     // MARK: - Private Methods
     
-    /// Updates the gradient effect for the title text
     private func updateGradient() {
         gradientLayer.frame = titleLabel.bounds
         
@@ -110,7 +102,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Sets up the initial UI layout and appearance
     private func setupUI() {
         view.backgroundColor = .white
         
@@ -131,7 +122,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Creates and configures feature items in the features stack view
     private func setupFeatures() {
         let features = [
             ("mic", "Unlimited Recording Duration"),
@@ -145,7 +135,6 @@ class PaywallVC: UIViewController {
             featuresStackView.addArrangedSubview(featureView)
         }
         
-        // Adjust spacing based on screen size
         let screenHeight = UIScreen.main.bounds.height
         if screenHeight < 700 { // iPhone SE, iPhone 8 gibi küçük ekranlar için
             featuresStackView.spacing = 16
@@ -154,7 +143,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Creates a single feature view with icon and text
     private func createFeatureView(imageName: String, text: String) -> UIView {
         let container = UIView()
         
@@ -176,7 +164,7 @@ class PaywallVC: UIViewController {
         imageView.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(24) // Slightly smaller icon for better fit
+            make.width.height.equalTo(24)
         }
         
         label.snp.makeConstraints { make in
@@ -186,13 +174,12 @@ class PaywallVC: UIViewController {
         }
         
         container.snp.makeConstraints { make in
-            make.height.equalTo(32) // Reduced height for better fit
+            make.height.equalTo(32)
         }
         
         return container
     }
     
-    /// Sets up the pricing options in the pricing stack view
     private func setupPricing() {
         let prices = [
             ("Weekly", "4.99$", false),
@@ -206,7 +193,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Creates a single price view with period and amount
     private func createPriceView(period: String, price: String, isPopular: Bool) -> UIView {
         let containerWrapper = UIView()
         
@@ -284,7 +270,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Sets up all UI constraints
     private func setupConstraints() {
         closeButton.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
@@ -325,7 +310,6 @@ class PaywallVC: UIViewController {
         }
     }
     
-    /// Sets up button actions
     private func setupActions() {
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         continueButton.addTarget(self, action: #selector(continueButtonTapped), for: .touchUpInside)
@@ -333,12 +317,10 @@ class PaywallVC: UIViewController {
     
     // MARK: - Action Methods
     
-    /// Handles close button tap
     @objc private func closeButtonTapped() {
         navigateHome()
     }
     
-    /// Handles continue button tap
     @objc private func continueButtonTapped() {
         navigateHome()
     }

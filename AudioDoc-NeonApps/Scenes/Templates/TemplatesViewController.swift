@@ -59,7 +59,6 @@ class TemplatesViewController: UIViewController {
         return tableView
     }()
     
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -94,13 +93,11 @@ class TemplatesViewController: UIViewController {
         }
     }
     
-    // MARK: - Actions
     @objc private func backButtonTapped() {
         dismiss(animated: true)
     }
 }
 
-// MARK: - UITableViewDelegate & UITableViewDataSource
 extension TemplatesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return templates.count

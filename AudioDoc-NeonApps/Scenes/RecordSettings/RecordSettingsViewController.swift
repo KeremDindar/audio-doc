@@ -1,4 +1,5 @@
 import UIKit
+import SnapKit
 
 class RecordSettingsViewController: UIViewController {
     
@@ -6,6 +7,10 @@ class RecordSettingsViewController: UIViewController {
     private var selectedTemplate: String?
     private var selectedLanguage: String?
     private var summaryLength: Float = 0.3
+    
+    // Assetlerden renkleri al
+    private let customBlue = UIColor(named: "CustomBlue") ?? UIColor.systemBlue
+    private let buttonColor = UIColor(named: "ButtonColor") ?? UIColor.blue
     
     private let languages = [
         "Italian",
@@ -143,6 +148,24 @@ class RecordSettingsViewController: UIViewController {
         return slider
     }()
     
+    // Gradient layer for save button
+    private var saveButtonGradientLayer: CAGradientLayer = {
+        let gradientLayer = CAGradientLayer()
+        // Asset kataloğundan renkleri kullan
+        let customBlue = UIColor(named: "CustomBlue") ?? UIColor.systemBlue
+        let buttonColor = UIColor(named: "ButtonColor") ?? UIColor.blue
+        
+        gradientLayer.colors = [
+            customBlue.cgColor,
+            buttonColor.cgColor
+        ]
+        gradientLayer.locations = [0.0, 1.0]
+        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
+        gradientLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
+        gradientLayer.cornerRadius = 25
+        return gradientLayer
+    }()
+    
     private lazy var saveButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Save", for: .normal)
@@ -150,22 +173,7 @@ class RecordSettingsViewController: UIViewController {
         button.layer.cornerRadius = 25
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         button.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
-        
-        // Create gradient layer
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [
-            UIColor.systemBlue.withAlphaComponent(0.8).cgColor,
-            UIColor.systemBlue.cgColor
-        ]
-        gradientLayer.locations = [0.0, 1.0]
-        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.0)
-        gradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
-        gradientLayer.cornerRadius = 25
-        button.layer.insertSublayer(gradientLayer, at: 0)
-        
-        // Store gradient layer as a property
-        button.gradientLayer = gradientLayer
-        
+        button.layer.masksToBounds = true
         return button
     }()
     
@@ -182,7 +190,9 @@ class RecordSettingsViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        saveButton.gradientLayer?.frame = saveButton.bounds
+        
+        // Update gradient layer frame when view layout changes
+        saveButtonGradientLayer.frame = saveButton.bounds
     }
     
     // MARK: - UI Setup
@@ -210,6 +220,9 @@ class RecordSettingsViewController: UIViewController {
         
         languagePickerContainerView.addSubview(languagePicker)
         languagePickerContainerView.addSubview(doneButton)
+        
+        // Add gradient layer to save button
+        saveButton.layer.insertSublayer(saveButtonGradientLayer, at: 0)
         
         setupConstraints()
     }
@@ -386,25 +399,5 @@ protocol TemplateSelectionDelegate: AnyObject {
 
 protocol LanguageSelectionDelegate: AnyObject {
     func didSelectLanguage(_ language: String)
-}
-
-extension UIButton {
-    private struct AssociatedKeys {
-        static var gradientLayer = "gradientLayer"
-    }
-    
-    var gradientLayer: CAGradientLayer? {
-        get {
-            return objc_getAssociatedObject(self, &AssociatedKeys.gradientLayer) as? CAGradientLayer
-        }
-        set {
-            objc_setAssociatedObject(self, &AssociatedKeys.gradientLayer, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        }
-    }
-    
-    open override func layoutSubviews() {
-        super.layoutSubviews()
-        gradientLayer?.frame = bounds
-    }
 } 
 

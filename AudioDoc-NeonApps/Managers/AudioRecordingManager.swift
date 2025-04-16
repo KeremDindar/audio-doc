@@ -2,7 +2,6 @@ import Foundation
 import AVFoundation
 
 protocol AudioRecordingManagerDelegate: AnyObject {
-    //Kullanıcının sesi çıkarma şiddeti.
     //Görsel bir ses seviyesi çubuğu göstermek gibi UI güncellemeleri için.
     func audioRecordingManager(_ manager: AudioRecordingManager, didUpdateAudioLevel level: Float)
     
@@ -30,8 +29,8 @@ class AudioRecordingManager: NSObject {
     
     private(set) var isRecording = false
     private(set) var isPaused = false
-    private(set) var recordingStartTime: Date?  // Ne zaman kayıt başladı
-    private(set) var recordingDuration: TimeInterval = 0  // Kaç saniye kayıt sürdü
+    private(set) var recordingStartTime: Date?
+    private(set) var recordingDuration: TimeInterval = 0
     private(set) var recordingURL: URL?
     
     weak var delegate: AudioRecordingManagerDelegate?
@@ -43,15 +42,10 @@ class AudioRecordingManager: NSObject {
     }
     
     // MARK: - Audio Session Setup
+    
+    
     private func setupAudioSession() {
         recordingSession = AVAudioSession.sharedInstance()
-        
-        // Mikrofonla hem konuşup hem dinlemeyi sağlayan kategori .playAndRecord.
-        
-       // Aktif hale getirmezsek mikrofon çalışmaz.
-
-       // try kullandık çünkü izin verilmemiş olabilir, kullanıcı mikrofonu kapatmış olabilir.
-        
         do {
             try recordingSession.setCategory(.playAndRecord, mode: .default)
             try recordingSession.setActive(true)
@@ -73,14 +67,11 @@ class AudioRecordingManager: NSObject {
         // Reset audio levels array
         audioLevels.removeAll()
         
-        // Create URL for recording file
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileName = "recording-\(UUID().uuidString).m4a"
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
         
-        // Setup audio session
         do {
-            // hem çalma hem kayıt yapma modu. play and record
             try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
@@ -88,7 +79,6 @@ class AudioRecordingManager: NSObject {
             return false
         }
         
-        // Recording settings
         let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
             AVSampleRateKey: 44100,
@@ -100,7 +90,7 @@ class AudioRecordingManager: NSObject {
         do {
             audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
             audioRecorder?.delegate = self
-            audioRecorder?.isMeteringEnabled = true  // Ses seviyesi ölçümü için şart.
+            audioRecorder?.isMeteringEnabled = true
             
             if audioRecorder?.record() == true {
                 isRecording = true
@@ -144,7 +134,6 @@ class AudioRecordingManager: NSObject {
         recorder.stop()
         audioRecorder = nil
         
-        // Deactivate audio session
         do {
             try AVAudioSession.sharedInstance().setActive(false)
         } catch {
@@ -184,30 +173,23 @@ class AudioRecordingManager: NSObject {
     
     // MARK: - Audio Level Checking
     func checkAudioLevels() -> Bool {
-        // If no levels were recorded, consider no audio detected
         if audioLevels.isEmpty {
             return false
         }
         
-        // Calculate average audio level
         let sum = audioLevels.reduce(0, +)
         let average = sum / Float(audioLevels.count)
         
-        // Sort audio levels to find peak values
         let sortedLevels = audioLevels.sorted(by: >)
         
-        // Get top 10% of audio samples to detect speech bursts
         let topSamplesCount = max(Int(Float(audioLevels.count) * 0.1), 1)
         let topSamples = Array(sortedLevels.prefix(topSamplesCount))
         let topAverage = topSamples.reduce(0, +) / Float(topSamples.count)
         
-        // Speech typically has periods of higher amplitude
         let hasSignificantPeaks = topAverage > minimumAudioLevel * 5
         
-        // Check if average level exceeds minimum threshold
         let hasAverageAudio = average > minimumAudioLevel
         
-        // Return true if either condition is met
         return hasSignificantPeaks || hasAverageAudio
     }
     

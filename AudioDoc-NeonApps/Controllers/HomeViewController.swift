@@ -3,34 +3,16 @@ import SnapKit
 import FirebaseFirestore
 
 // MARK: - HomeViewController
-// Ana ekranı yöneten view controller
-// Neden UIViewController'dan türetildi?
-// - Standart iOS view controller yapısı
-// - Temel view controller özelliklerini kullanabilmek için
-// - Kolay entegrasyon ve genişletilebilirlik
-// Alternatif: UICollectionViewController kullanılabilirdi ama bu durumda daha karmaşık bir yapı gerekirdi
+
 class HomeViewController: UIViewController {
     
-    // MARK: - Properties
-    // Kayıtlar dizisi
-    // Neden private var kullanıldı?
-    // - Encapsulation (kapsülleme) prensibi
-    // - Veri güvenliği
-    // - Kontrollü erişim
+   
     private var recordings: [Recording] = []
     
-    // Yükleme durumu
-    // Neden isLoading flag'i kullanıldı?
-    // - Aynı anda birden fazla yükleme işlemini önlemek için
-    // - UI güncellemelerini kontrol etmek için
+   
     private var isLoading = false
     
-    // MARK: - UI Components
-    // Başlık etiketi
-    // Neden UILabel kullanıldı?
-    // - Basit metin gösterimi için en uygun bileşen
-    // - Kolay özelleştirme
-    // - Performanslı
+    
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "AudioDoc™"
@@ -40,11 +22,7 @@ class HomeViewController: UIViewController {
         return label
     }()
     
-    // Mikrofon ikonu
-    // Neden UIImageView kullanıldı?
-    // - Görsel içerik göstermek için en uygun bileşen
-    // - SF Symbols entegrasyonu
-    // - Kolay özelleştirme
+    
     private let microphoneImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "mic.circle.fill")
@@ -53,7 +31,6 @@ class HomeViewController: UIViewController {
         return imageView
     }()
     
-    // Durum etiketi
     private let statusLabel: UILabel = {
         let label = UILabel()
         label.text = "Nothing Saved in Timeline"
@@ -63,11 +40,7 @@ class HomeViewController: UIViewController {
         return label
     }()
     
-    // Ekleme butonu
-    // Neden UIButton kullanıldı?
-    // - Kullanıcı etkileşimi için en uygun bileşen
-    // - Dokunma olaylarını yönetmek için
-    // - Görsel özelleştirme
+    
     private lazy var addButton: UIButton = {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
@@ -79,16 +52,12 @@ class HomeViewController: UIViewController {
         return button
     }()
     
-    // Gradient katmanı
-    // Neden CAGradientLayer kullanıldı?
-    // - Performanslı gradient efekti
-    // - Donanım hızlandırmalı
-    // - Kolay animasyon
+    
     private let gradientLayer: CAGradientLayer = {
         let gradient = CAGradientLayer()
         gradient.colors = [
-            UIColor(named: "customBlue")!.cgColor,
-            UIColor(named: "customPink")!.cgColor
+            UIColor.customBlue.cgColor,
+            UIColor.customPink.cgColor
         ]
         gradient.locations = [0.0, 1.0]
         gradient.startPoint = CGPoint(x: 0.0, y: 0.0)
@@ -96,11 +65,7 @@ class HomeViewController: UIViewController {
         return gradient
     }()
     
-    // Tablo görünümü
-    // Neden UITableView kullanıldı?
-    // - Liste verilerini göstermek için en uygun bileşen
-    // - Performanslı kaydırma
-    // - Yeniden kullanılabilir hücreler
+    
     private let tableView: UITableView = {
         let tableView = UITableView()
         tableView.register(RecordingTableViewCell.self, forCellReuseIdentifier: RecordingTableViewCell.identifier)
@@ -111,11 +76,7 @@ class HomeViewController: UIViewController {
         return tableView
     }()
     
-    // Yükleme göstergesi
-    // Neden UIActivityIndicatorView kullanıldı?
-    // - Standart iOS yükleme göstergesi
-    // - Kullanıcı dostu
-    // - Kolay entegrasyon
+   
     private let activityIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.hidesWhenStopped = true
@@ -123,7 +84,6 @@ class HomeViewController: UIViewController {
     }()
     
     // MARK: - Lifecycle Methods
-    // View yüklendiğinde çağrılan metod
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -139,7 +99,6 @@ class HomeViewController: UIViewController {
         view.bringSubviewToFront(addButton)
     }
     
-    // View düzeni güncellendiğinde çağrılan metod
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradientLayer.frame = addButton.bounds
@@ -147,14 +106,11 @@ class HomeViewController: UIViewController {
         addButton.bringSubviewToFront(addButton.imageView!)
     }
     
-    // View görünmeden önce çağrılan metod
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Reload recordings when view appears
         loadRecordings()
     }
     
-    // View göründükten sonra çağrılan metod
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         view.bringSubviewToFront(addButton)
@@ -166,11 +122,9 @@ class HomeViewController: UIViewController {
     }
     
     // MARK: - UI Setup
-    // UI bileşenlerini ayarlama
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Alt görünümleri ekleme
         view.addSubview(titleLabel)
         view.addSubview(microphoneImageView)
         view.addSubview(statusLabel)
@@ -181,9 +135,8 @@ class HomeViewController: UIViewController {
         gradientLayer.cornerRadius = 30
         addButton.layer.insertSublayer(gradientLayer, at: 0)
         
-        // SnapKit ile kısıtlamaları ayarlama
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(-10)
             make.centerX.equalToSuperview()
         }
         
@@ -216,30 +169,25 @@ class HomeViewController: UIViewController {
             make.center.equalToSuperview()
         }
         
-        // Ekleme butonuna gölge efekti
         addButton.layer.shadowColor = UIColor.black.cgColor
         addButton.layer.shadowOpacity = 0.3
         addButton.layer.shadowOffset = CGSize(width: 0, height: 3)
         addButton.layer.shadowRadius = 5
     }
     
-    // Tablo görünümünü ayarlama
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
     }
     
     // MARK: - Data Loading
-    // Kayıtları yükleme
     private func loadRecordings() {
         isLoading = true
         
-        // Yükleme durumunu güncelle
         microphoneImageView.isHidden = true
         statusLabel.isHidden = true
         activityIndicator.startAnimating()
         
-        // Firebase'den kayıtları yükle
         FirebaseService.shared.fetchAllRecordings { [weak self] result in
             guard let self = self else { return }
             
@@ -265,7 +213,6 @@ class HomeViewController: UIViewController {
         }
     }
     
-    // Boş durumu güncelleme
     private func updateEmptyState() {
         if recordings.isEmpty {
             tableView.isHidden = true
@@ -279,7 +226,6 @@ class HomeViewController: UIViewController {
     }
     
     // MARK: - Actions
-    // Ekleme butonuna tıklandığında
     @objc private func addButtonTapped() {
         let audioVC = AudioRecordingViewController()
         let navController = UINavigationController(rootViewController: audioVC)
@@ -287,14 +233,12 @@ class HomeViewController: UIViewController {
         present(navController, animated: true)
     }
     
-    // Uyarı gösterme
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
     
-    // Ses dosyasını indirme
     private func downloadAudioFile(from url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileName = url.lastPathComponent
@@ -332,12 +276,10 @@ class HomeViewController: UIViewController {
     private func startListeningForRecordings() {
         isLoading = true
         
-        // Yükleme durumunu güncelle
         microphoneImageView.isHidden = true
         statusLabel.isHidden = true
         activityIndicator.startAnimating()
         
-        // Firebase'den gerçek zamanlı dinleme başlat
         listener = FirebaseService.shared.listenForRecordings { [weak self] result in
             guard let self = self else { return }
             
@@ -363,14 +305,12 @@ class HomeViewController: UIViewController {
         }
     }
     
-    // Handle notification when a recording is added
     @objc private func recordingAdded() {
         print("Recording added notification received, reloading data...")
         loadRecordings()
     }
     
     deinit {
-        // Remove observer when view controller is deallocated
         NotificationCenter.default.removeObserver(self)
     }
 }
@@ -398,7 +338,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             
             let recording = self.recordings[indexPath.row]
             
-            // Show confirmation alert
             let alert = UIAlertController(
                 title: "Delete Recording",
                 message: "Are you sure you want to delete this recording? This action cannot be undone.",
@@ -411,7 +350,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
 //            })
             
             alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
-                // Show loading indicator
                 let loadingAlert = UIAlertController(title: nil, message: "Deleting...", preferredStyle: .alert)
                 let loadingIndicator = UIActivityIndicatorView(frame: CGRect(x: 10, y: 5, width: 50, height: 50))
                 loadingIndicator.hidesWhenStopped = true
@@ -420,13 +358,11 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                 loadingAlert.view.addSubview(loadingIndicator)
                 self.present(loadingAlert, animated: true)
                 
-                // Delete from Firebase
                 FirebaseService.shared.deleteRecording(recording) { result in
                     DispatchQueue.main.async {
                         loadingAlert.dismiss(animated: true) {
                             switch result {
                             case .success:
-                                // Remove from local array and table view
                                 self.recordings.remove(at: indexPath.row)
                                 tableView.deleteRows(at: [indexPath], with: .automatic)
                                 self.updateEmptyState()
@@ -450,7 +386,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let recording = recordings[indexPath.row]
         
-        // Show loading indicator
         let loadingAlert = UIAlertController(title: nil, message: "Loading audio...", preferredStyle: .alert)
         let loadingIndicator = UIActivityIndicatorView(frame: CGRect(x: 10, y: 5, width: 50, height: 50))
         loadingIndicator.hidesWhenStopped = true
@@ -459,19 +394,16 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         loadingAlert.view.addSubview(loadingIndicator)
         present(loadingAlert, animated: true)
         
-        // Download audio file
         if let audioURL = URL(string: recording.audioURL) {
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let fileName = audioURL.lastPathComponent
             let localURL = documentsPath.appendingPathComponent(fileName)
             
-            // Check if file already exists
             if FileManager.default.fileExists(atPath: localURL.path) {
                 loadingAlert.dismiss(animated: true) {
                     self.presentTranscriptionVC(with: recording, localURL: localURL)
                 }
             } else {
-                // Download the file
                 let downloadTask = URLSession.shared.downloadTask(with: audioURL) { tempURL, response, error in
                     DispatchQueue.main.async {
                         if let error = error {

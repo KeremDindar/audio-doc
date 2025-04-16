@@ -1,19 +1,10 @@
 import UIKit
 
 // MARK: - WaveformView
-// Ses dalgası görselleştirmesi için özel view
-// Neden UIView'dan türetildi?
-// - Özel çizim işlemleri için
-// - Performanslı animasyonlar için
-// - Kolay özelleştirme için
-// Alternatif: CALayer kullanılabilirdi ama bu durumda daha düşük seviyeli bir API ile çalışmak gerekirdi
+
 class WaveformView: UIView {
     // MARK: - Properties
-    // Animasyon için display link
-    // Neden CADisplayLink kullanıldı?
-    // - Ekran yenileme hızında animasyon
-    // - Performanslı
-    // - Senkronize animasyon
+
     private var displayLink: CADisplayLink?
     
     // Dalga fazı

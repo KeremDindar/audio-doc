@@ -78,31 +78,5 @@ struct Recording: Codable {
         return dict
     }
     
-    // Demo kayıtları oluşturmak için kullanılacak static fonksiyon
-//    static func getDemoRecordings() -> [Recording] {
-//        let loremIpsum = "Lorem ipsum dolor sit amet, consectetur. Pretium vitae sed id risus diam magna fusce sagittis."
-//        
-//        return [
-//            Recording(
-//                title: "Voice 0004",
-//                summaryKeywords: ["toplantı", "pazarlama", "satış"],
-//                transcription: loremIpsum,
-//                createdAt: Date(timeIntervalSince1970: 1712322000), // 05.04.2023 12:00 PM
-//                duration: 124,
-//                audioURL: "demo_recording_1.m4a",
-//                tags: ["iş", "toplantı"],
-//                imageURL: nil
-//            ),
-//            Recording(
-//                title: "Voice 0004",
-//                summaryKeywords: ["toplantı", "pazarlama", "satış"],
-//                transcription: loremIpsum,
-//                createdAt: Date(timeIntervalSince1970: 1712322000), // 05.04.2023 12:00 PM
-//                duration: 124,
-//                audioURL: "demo_recording_2.m4a",
-//                tags: ["iş", "toplantı"],
-//                imageURL: nil
-//            )
-//        ]
-//    }
+   
 }
